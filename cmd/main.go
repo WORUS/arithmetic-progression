@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"os"
 
+	server "github.com/WORUS/arithmetic-progression"
 	handler "github.com/WORUS/arithmetic-progression/internal/app/handler"
 	"github.com/joho/godotenv"
 )
@@ -16,10 +17,12 @@ func main() {
 
 	handler := new(handler.Handler)
 
-	http.HandleFunc("/task", handler.TaskHandler)
+	serv := new(server.Server)
 
-	err := http.ListenAndServe("localhost:8080", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	func() {
+		if err := serv.Run(os.Getenv("port"), handler.InitRoutes()); err != nil {
+			log.Fatalf("error occurred while running http server: %s", err.Error())
+		}
+	}()
+
 }

@@ -2,19 +2,30 @@ package handler
 
 import (
 	"net/http"
+
+	"github.com/WORUS/arithmetic-progression/internal/app/service"
+	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
+	services *service.Service
+}
+
+func Newhandler(service *service.Service) *Handler {
+	return &Handler{
+		services: service,
+	}
+}
+
+func (h *Handler) InitRoutes() *gin.Engine {
+	r := gin.Default()
+
+	r.POST("/task", h.SetTask)
+	r.GET("/task", h.SetTask)
+
+	return r
 }
 
 func (h *Handler) TaskHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.WriteHeader(http.StatusOK)
-	case http.MethodPost:
-		w.WriteHeader(http.StatusOK)
-	default:
-		http.Error(w, "invalid http method", http.StatusMethodNotAllowed)
-	}
 
 }
