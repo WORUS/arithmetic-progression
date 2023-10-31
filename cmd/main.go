@@ -7,8 +7,8 @@ import (
 	"os"
 
 	server "github.com/WORUS/arithmetic-progression"
+	"github.com/WORUS/arithmetic-progression/internal/app/cache"
 	handler "github.com/WORUS/arithmetic-progression/internal/app/handler"
-	"github.com/WORUS/arithmetic-progression/internal/app/repository"
 	"github.com/WORUS/arithmetic-progression/internal/app/service"
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 	"github.com/joho/godotenv"
@@ -20,15 +20,15 @@ func main() {
 	ctx := context.Background()
 	var N int
 	flag.Int("N", defaultN, "number of goroutines")
-	queue := make(chan task.TaskInput, 7)
+	queue := make(chan *task.Task, 7)
 	goroutines := make(chan bool, N)
 
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading env variables: %s", err.Error())
 	}
 
-	repository := new(repository.Repository)
-	service := service.NewService(repository, queue, goroutines)
+	cache := cache.NewCache()
+	service := service.NewService(cache, queue, goroutines)
 	handler := handler.Newhandler(service)
 	serv := new(server.Server)
 

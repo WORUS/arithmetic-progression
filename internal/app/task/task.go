@@ -1,9 +1,11 @@
 package task
 
-import "time"
+import (
+	"time"
+)
 
 type TaskInput struct {
-	N   int     `json:"n" binding:"required"`
+	N   uint    `json:"n" binding:"required"`
 	D   float64 `json:"d" binding:"required"`
 	N1  float64 `json:"n1" binding:"required"`
 	I   float64 `json:"I" binding:"required"`
@@ -11,15 +13,15 @@ type TaskInput struct {
 }
 
 type Task struct {
-	number    int `json:"number"`
-	status    string
-	N         int       `json:"n" binding:"required"`
-	D         float64   `json:"d" binding:"required"`
-	N1        float64   `json:"n1" binding:"required"`
-	I         float64   `json:"I" binding:"required"`
-	TTL       float64   `json:"TTL" binding:"required"`
-	iteration int       `json:"iteration"`
-	setTime   time.Time `json:"setTime"`
-	startTime time.Time `json:"startTime"`
-	endTime   time.Time `json:"endTime"`
+	Number    uint      `json:"number"` //номер в очереди
+	Status    string    `json:"status"`
+	N         uint      `json:"n"`
+	D         float64   `json:"d"`
+	N1        float64   `json:"n1"`
+	I         float64   `json:"I"`
+	TTL       float64   `json:"TTL"`
+	Iteration uint      `json:"iteration"` //текущая итерация
+	SetTime   time.Time `json:"setTime"`   //время занесения задачи в очередь
+	StartTime time.Time `json:"startTime"` //время старта задачи
+	EndTime   time.Time `json:"endTime"`   //время окончания задачи(если выполнена)
 }

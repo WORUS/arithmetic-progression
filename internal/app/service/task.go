@@ -10,14 +10,26 @@ import (
 )
 
 func (s *Service) SetTaskInQueue(ctx context.Context, tsk task.TaskInput) error {
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case s.queue <- tsk:
-		//fmt.Print(<-s.queue)
-		return nil
+	task := task.Task{
+		Number:  uint(len(s.queue)),
+		Status:  "waiting in queue",
+		N:       tsk.N,
+		D:       tsk.D,
+		N1:      tsk.N1,
+		I:       tsk.I,
+		TTL:     tsk.TTL,
+		SetTime: time.Now().UTC(),
 	}
+	s.cache.Set(&task)
+	s.queue <- &task
+	return nil
+	// select {
+	// case <-ctx.Done():
+	// 	return ctx.Err()
+	// case s.queue <- tsk:
+
+	// 	return nil
+	// }
 }
 
 func (s *Service) QueueListener(ctx context.Context) error {
@@ -32,15 +44,7 @@ func (s *Service) QueueListener(ctx context.Context) error {
 
 }
 
-func (s *Service) StartTask(tsk task.TaskInput) task.Task {
-	var task task.Task
-
-	a := make([]float64, tsk.N)
-	a[0] = tsk.N1
-
-	// for i := 1; i < len(a); i++ {
-	// 	a[i] = a[i-1] + tsk.D
-	// }
+func (s *Service) StartTask(tsk *task.Task) {
 
 	value := fmt.Sprintf("%fs", tsk.I)
 	interval, err := time.ParseDuration(value)
@@ -50,20 +54,31 @@ func (s *Service) StartTask(tsk task.TaskInput) task.Task {
 	ticker := time.NewTicker(interval)
 
 	func() {
+		a := make([]float64, tsk.N)
+		a[0] = tsk.N1
 		iter := 1
-		fmt.Println("Progression started")
+		tsk.Status = "in process"
+		tsk.StartTime = time.Now()
+		tsk.Iteration = uint(iter)
 		for t := range ticker.C {
-			if iter < tsk.N {
+			if iter < len(a) {
 				a[iter] = a[iter-1] + tsk.D
 				iter++
+				tsk.Iteration = uint(iter)
 				fmt.Println("tick at ", t.UTC())
 				continue
 			}
+			tsk.EndTime = time.Now()
+			tsk.Status = "completed"
 			return
 		}
 	}()
-	fmt.Print(a)
+
 	ticker.Stop()
 
-	return task
+}
+
+func (s *Service) GetTasks() interface{} {
+	return s.cache.GetAll()
+
 }

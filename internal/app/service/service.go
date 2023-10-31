@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/WORUS/arithmetic-progression/internal/app/repository"
+	"github.com/WORUS/arithmetic-progression/internal/app/cache"
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 )
 
@@ -11,14 +11,14 @@ type Task interface {
 }
 
 type Service struct {
-	repository *repository.Repository
-	queue      chan task.TaskInput
+	cache      *cache.Cache
+	queue      chan *task.Task
 	goroutines chan bool
 }
 
-func NewService(repo *repository.Repository, que chan task.TaskInput, gorouts chan bool) *Service {
+func NewService(cache *cache.Cache, que chan *task.Task, gorouts chan bool) *Service {
 	return &Service{
-		repository: repo,
+		cache:      cache,
 		queue:      que,
 		goroutines: gorouts,
 	}

@@ -15,7 +15,14 @@ func (h *Handler) SetTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	if tsk.I <= 0 || tsk.TTL <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "time cannot be less than 0"})
+		return
+	}
 	h.services.SetTaskInQueue(ctx, tsk)
 	c.JSON(http.StatusOK, tsk)
+}
+
+func (h *Handler) GetTasks(c *gin.Context) {
+	c.JSON(http.StatusOK, h.services.GetTasks())
 }

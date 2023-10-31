@@ -18,8 +18,8 @@ func Newhandler(service *service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/task", h.SetTask)
-	r.GET("/task", h.SetTask)
+	r.POST("/tasks", h.SetTask)
+	r.GET("/tasks", h.GetTasks)
 
 	return r
 }
