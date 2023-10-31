@@ -1,7 +1,10 @@
 package cache
 
 import (
+	"fmt"
+	"log"
 	"sync"
+	"time"
 
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 )
@@ -25,19 +28,7 @@ func (c *Cache) IncIterator() {
 	c.iterator++
 }
 
-func (c *Cache) Set(task *task.Task) int {
-
-	// var expiration int64
-
-	// // Если продолжительность жизни равна 0 - используется значение по-умолчанию
-	// if duration == 0 {
-	// 	duration = c.defaultExpiration
-	// }
-
-	// // Устанавливаем время истечения кеша
-	// if duration > 0 {
-	// 	expiration = time.Now().Add(duration).UnixNano()
-	// }
+func (c *Cache) Set(task *task.Task) {
 
 	c.Lock()
 
@@ -45,9 +36,10 @@ func (c *Cache) Set(task *task.Task) int {
 
 	c.tasks[c.iterator] = task
 
+	task.Key = c.iterator
+
 	defer c.IncIterator()
 
-	return c.iterator
 }
 
 func (c *Cache) GetAll() interface{} {
@@ -56,22 +48,20 @@ func (c *Cache) GetAll() interface{} {
 
 	defer c.RUnlock()
 
-	//_, found := c.tasks[key]
-
-	// ключ не найден
-	// if !found {
-	// 	return nil, false
-	// }
-
-	// Проверка на установку времени истечения, в противном случае он бессрочный
-	// if item.Expiration > 0 {
-
-	// 	// Если в момент запроса кеш устарел возвращаем nil
-	// 	if time.Now().UnixNano() > item.Expiration {
-	// 		return nil, false
-	// 	}
-
-	// }
-
 	return c.tasks
+}
+
+func (c *Cache) TaskCleaner(tsk *task.Task) {
+
+	value := fmt.Sprintf("%fs", tsk.TTL)
+	interval, err := time.ParseDuration(value)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	tickerTTL := time.NewTicker(interval)
+
+	<-tickerTTL.C
+
+	delete(c.tasks, tsk.Key)
 }

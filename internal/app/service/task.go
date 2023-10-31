@@ -50,6 +50,7 @@ func (s *Service) QueueListener(ctx context.Context) error {
 			case <-ctx.Done():
 				return ctx.Err()
 			case s.goroutines <- true:
+				fmt.Print("Поток занимается...")
 				go s.StartTask(tsk)
 			}
 
@@ -97,6 +98,9 @@ func (s *Service) StartTask(tsk *task.Task) {
 	}()
 
 	ticker.Stop()
+
+	s.cache.TaskCleaner(tsk)
+
 	<-s.goroutines
 }
 

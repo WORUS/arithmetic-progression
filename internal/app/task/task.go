@@ -24,4 +24,5 @@ type Task struct {
 	SetTime   time.Time `json:"setTime"`   //время занесения задачи в очередь
 	StartTime time.Time `json:"startTime"` //время старта задачи
 	EndTime   time.Time `json:"endTime"`   //время окончания задачи(если выполнена)
+	Key       int
 }

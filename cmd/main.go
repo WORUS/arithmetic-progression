@@ -36,6 +36,7 @@ func main() {
 
 	go service.QueueListener(ctx)
 
+	//TODO: graceful shutodwn, ttl, sorting
 	func() {
 		if err := serv.Run(os.Getenv("port"), handler.InitRoutes()); err != nil {
 			log.Fatalf("error occurred while running http server: %s", err.Error())
