@@ -18,10 +18,12 @@ var defaultN = 7
 
 func main() {
 	ctx := context.Background()
-	var N int
-	flag.Int("N", defaultN, "number of goroutines")
-	queue := make(chan *task.Task, 7)
-	goroutines := make(chan bool, N)
+
+	N := flag.Int("n", defaultN, "max number of goroutines")
+	flag.Parse()
+
+	queue := make(chan *task.Task, 2)
+	goroutines := make(chan bool, *N)
 
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading env variables: %s", err.Error())
@@ -29,7 +31,7 @@ func main() {
 
 	cache := cache.NewCache()
 	service := service.NewService(cache, queue, goroutines)
-	handler := handler.Newhandler(service)
+	handler := handler.NewHandler(service)
 	serv := new(server.Server)
 
 	go service.QueueListener(ctx)

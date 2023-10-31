@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (h *Handler) GetTasks(c *gin.Context) {
+	c.JSON(http.StatusOK, h.services.GetTasks())
+}
+
 func (h *Handler) SetTask(c *gin.Context) {
 	var tsk task.TaskInput
 	ctx := context.Background()
@@ -21,8 +25,4 @@ func (h *Handler) SetTask(c *gin.Context) {
 	}
 	h.services.SetTaskInQueue(ctx, tsk)
 	c.JSON(http.StatusOK, tsk)
-}
-
-func (h *Handler) GetTasks(c *gin.Context) {
-	c.JSON(http.StatusOK, h.services.GetTasks())
 }
