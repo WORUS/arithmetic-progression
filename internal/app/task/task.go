@@ -16,10 +16,10 @@ type Task struct {
 	N1        float64 `json:"n1"`
 	I         float64 `json:"I"`
 	TTL       float64 `json:"TTL"`
-	Iteration uint    `json:"iteration"` //текущая итерация
-	SetTime   string  `json:"setTime"`   //время занесения задачи в очередь
-	StartTime string  `json:"startTime"` //время старта задачи
-	EndTime   string  `json:"endTime"`   //время окончания задачи(если выполнена)
+	Iteration uint    `json:"iteration"`         //текущая итерация
+	SetTime   string  `json:"setTime"`           //время занесения задачи в очередь
+	StartTime string  `json:"startTime"`         //время старта задачи
+	EndTime   string  `json:"endTime,omitempty"` //время окончания задачи(если выполнена)
 	Key       int     `json:"-"`
 	CleanTime string  `json:"-"`
 }

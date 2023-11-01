@@ -11,19 +11,17 @@ type Task interface {
 }
 
 type Service struct {
-	cache       *cache.Cache
-	qready      chan bool
-	queue       []*task.Task
-	goroutines  chan bool
-	taskCounter int
+	cache      *cache.Cache
+	qready     chan bool
+	queue      []*task.Task
+	goroutines chan bool
 }
 
 func NewService(cache *cache.Cache, qr chan bool, gorouts chan bool, que []*task.Task) *Service {
 	return &Service{
-		cache:       cache,
-		qready:      qr,
-		queue:       que,
-		goroutines:  gorouts,
-		taskCounter: 0,
+		cache:      cache,
+		qready:     qr,
+		queue:      que,
+		goroutines: gorouts,
 	}
 }
