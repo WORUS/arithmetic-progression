@@ -11,17 +11,19 @@ type Task interface {
 }
 
 type Service struct {
-	cache      *cache.Cache
-	queue      chan *task.Task
-	queSlice   []*task.Task
-	goroutines chan bool
+	cache       *cache.Cache
+	qready      chan bool
+	queue       []*task.Task
+	goroutines  chan bool
+	taskCounter int
 }
 
-func NewService(cache *cache.Cache, que chan *task.Task, gorouts chan bool, queSlice []*task.Task) *Service {
+func NewService(cache *cache.Cache, qr chan bool, gorouts chan bool, que []*task.Task) *Service {
 	return &Service{
-		cache:      cache,
-		queue:      que,
-		goroutines: gorouts,
-		queSlice:   queSlice,
+		cache:       cache,
+		qready:      qr,
+		queue:       que,
+		goroutines:  gorouts,
+		taskCounter: 0,
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	server "github.com/WORUS/arithmetic-progression"
 	"github.com/WORUS/arithmetic-progression/internal/app/cache"
@@ -12,36 +14,46 @@ import (
 	"github.com/WORUS/arithmetic-progression/internal/app/service"
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
-var defaultN = 7
+const (
+	defaultN = 7
+)
 
 func main() {
 	ctx := context.Background()
 
-	N := flag.Int("n", defaultN, "max number of goroutines")
+	N := flag.Int("n", defaultN, "max number of goroutines for tasks")
 	flag.Parse()
 
-	queue := make(chan *task.Task, 1000)
+	var queue []*task.Task
+	qready := make(chan bool, 1000)
 	goroutines := make(chan bool, *N)
-	var que []*task.Task
 
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading env variables: %s", err.Error())
 	}
 
 	cache := cache.NewCache()
-	service := service.NewService(cache, queue, goroutines, que)
+	service := service.NewService(cache, qready, goroutines, queue)
 	handler := handler.NewHandler(service)
 	serv := new(server.Server)
 
 	go service.QueueListener(ctx)
 
-	//TODO: graceful shutodwn, ttl, sorting
-	func() {
+	go func() {
 		if err := serv.Run(os.Getenv("port"), handler.InitRoutes()); err != nil {
 			log.Fatalf("error occurred while running http server: %s", err.Error())
 		}
 	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	if err := serv.Shutdown(context.Background()); err != nil {
+		logrus.Errorf("error occured on server shutting down: %s", err.Error())
+	}
 
 }

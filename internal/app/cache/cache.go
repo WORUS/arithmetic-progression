@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -48,7 +49,23 @@ func (c *Cache) GetAll() interface{} {
 
 	defer c.RUnlock()
 
-	return c.tasks
+	length := len(c.tasks)
+
+	keys := make([]int, 0, length)
+
+	for k := range c.tasks {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+
+	order := make([]task.Task, 0, length)
+
+	for k := range keys {
+		order = append(order, *c.tasks[keys[k]])
+	}
+
+	return order
 }
 
 func (c *Cache) TaskCleaner(tsk *task.Task) {
@@ -63,7 +80,9 @@ func (c *Cache) TaskCleaner(tsk *task.Task) {
 
 	<-tickerTTL.C
 
-	//delete(c.tasks, tsk.Key)
+	c.Lock()
 
-	tsk.CleanTime = time.Now().Format(time.DateTime)
+	defer c.Unlock()
+
+	delete(c.tasks, tsk.Key)
 }

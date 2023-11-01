@@ -20,6 +20,6 @@ type Task struct {
 	SetTime   string  `json:"setTime"`   //время занесения задачи в очередь
 	StartTime string  `json:"startTime"` //время старта задачи
 	EndTime   string  `json:"endTime"`   //время окончания задачи(если выполнена)
-	Key       int     `json:"key,omitempty"`
-	CleanTime string  `json:"cleanTime"`
+	Key       int     `json:"-"`
+	CleanTime string  `json:"-"`
 }

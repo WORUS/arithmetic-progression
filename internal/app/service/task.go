@@ -9,7 +9,7 @@ import (
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 )
 
-func (s *Service) SetTaskInQueue(ctx context.Context, tsk task.TaskInput) error {
+func (s *Service) SetTaskInQueue(tsk task.TaskInput) error {
 	task := task.Task{
 		Number:  uint(len(s.queue)) + 1,
 		Status:  "waiting in queue",
@@ -23,58 +23,46 @@ func (s *Service) SetTaskInQueue(ctx context.Context, tsk task.TaskInput) error 
 
 	s.cache.Set(&task)
 
-	s.queue <- &task
+	s.queue = append(s.queue, &task)
 
-	s.queSlice = append(s.queSlice, &task)
-
-	//go s.QueuePosition(&task)
+	s.qready <- true
 
 	return nil
 }
 
-func (s *Service) QueuePosition(tsk *task.Task) {
-
+func (s *Service) queueIndexResfresher() {
+	for i := range s.queue {
+		s.queue[i].Number = uint(i + 1)
+	}
 }
 
-func (s *Service) QueueListener(ctx context.Context) error {
+func (s *Service) QueueListener(ctx context.Context) {
 	for {
 
-		// select {
-		// case s.goroutines <- true:
-		// 	go s.StartTask(<-s.queue)
-		// 	fmt.Printf("Запущено %d задач", len(s.goroutines))
-		// }
-		if len(s.queSlice) > 0 {
+		select {
+		case <-ctx.Done():
+			return
+		case <-s.qready:
 			select {
+
 			case <-ctx.Done():
-				return ctx.Err()
+				return
+
 			case s.goroutines <- true:
-				go s.StartTask(s.queSlice[0])
-				s.queSlice = s.queSlice[1:]
-				//TODO: заменить channel на slice
+				go s.startTask(s.queue[0])
+
+				s.queue[0].Number = 0
+				s.queue = s.queue[1:]
+
+				go s.queueIndexResfresher()
+
 			}
 		}
 
-		// select {
-		// case <-ctx.Done():
-		// 	return ctx.Err()
-		// case tsk := <-s.queue:
-
-		// 	select {
-		// 	case <-ctx.Done():
-		// 		return ctx.Err()
-		// 	case s.goroutines <- true:
-		// 		go s.StartTask(tsk)
-
-		// 		//TODO: заменить channel на slice
-		// 	}
-
-		// }
 	}
-
 }
 
-func (s *Service) StartTask(tsk *task.Task) {
+func (s *Service) startTask(tsk *task.Task) {
 
 	value := fmt.Sprintf("%fs", tsk.I)
 	interval, err := time.ParseDuration(value)
@@ -94,14 +82,13 @@ func (s *Service) StartTask(tsk *task.Task) {
 		tsk.StartTime = time.Now().Format(time.DateTime)
 		tsk.Iteration = uint(iter)
 
-		for t := range ticker.C {
+		for range ticker.C {
 			if iter < len(a) {
 				a[iter] = a[iter-1] + tsk.D
 				iter++
 
 				tsk.Iteration = uint(iter)
 
-				fmt.Println("tick at ", t.UTC())
 				continue
 			}
 
