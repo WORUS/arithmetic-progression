@@ -5,11 +5,6 @@ import (
 	"github.com/WORUS/arithmetic-progression/internal/app/task"
 )
 
-type Task interface {
-	SetTask()
-	GetTask()
-}
-
 type Service struct {
 	cache      *cache.Cache
 	qready     chan bool
