@@ -22,15 +22,16 @@ func main() {
 	N := flag.Int("n", defaultN, "max number of goroutines")
 	flag.Parse()
 
-	queue := make(chan *task.Task, 2)
+	queue := make(chan *task.Task, 1000)
 	goroutines := make(chan bool, *N)
+	var que []*task.Task
 
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading env variables: %s", err.Error())
 	}
 
 	cache := cache.NewCache()
-	service := service.NewService(cache, queue, goroutines)
+	service := service.NewService(cache, queue, goroutines, que)
 	handler := handler.NewHandler(service)
 	serv := new(server.Server)
 

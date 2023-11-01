@@ -11,26 +11,29 @@ import (
 
 func (s *Service) SetTaskInQueue(ctx context.Context, tsk task.TaskInput) error {
 	task := task.Task{
-		Number:  uint(len(s.queue)),
+		Number:  uint(len(s.queue)) + 1,
 		Status:  "waiting in queue",
 		N:       tsk.N,
 		D:       tsk.D,
 		N1:      tsk.N1,
 		I:       tsk.I,
 		TTL:     tsk.TTL,
-		SetTime: time.Now().UTC(),
+		SetTime: time.Now().Format(time.DateTime),
 	}
-	s.cache.Set(&task)
-	//TODO: limiter
-	s.queue <- &task
-	return nil
-	// select {
-	// case <-ctx.Done():
-	// 	return ctx.Err()
-	// case s.queue <- tsk:
 
-	// 	return nil
-	// }
+	s.cache.Set(&task)
+
+	s.queue <- &task
+
+	s.queSlice = append(s.queSlice, &task)
+
+	//go s.QueuePosition(&task)
+
+	return nil
+}
+
+func (s *Service) QueuePosition(tsk *task.Task) {
+
 }
 
 func (s *Service) QueueListener(ctx context.Context) error {
@@ -41,32 +44,44 @@ func (s *Service) QueueListener(ctx context.Context) error {
 		// 	go s.StartTask(<-s.queue)
 		// 	fmt.Printf("Запущено %d задач", len(s.goroutines))
 		// }
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case tsk := <-s.queue:
+		if len(s.queSlice) > 0 {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case s.goroutines <- true:
-				fmt.Print("Поток занимается...")
-				go s.StartTask(tsk)
+				go s.StartTask(s.queSlice[0])
+				s.queSlice = s.queSlice[1:]
+				//TODO: заменить channel на slice
 			}
-
 		}
+
+		// select {
+		// case <-ctx.Done():
+		// 	return ctx.Err()
+		// case tsk := <-s.queue:
+
+		// 	select {
+		// 	case <-ctx.Done():
+		// 		return ctx.Err()
+		// 	case s.goroutines <- true:
+		// 		go s.StartTask(tsk)
+
+		// 		//TODO: заменить channel на slice
+		// 	}
+
+		// }
 	}
 
 }
 
 func (s *Service) StartTask(tsk *task.Task) {
-	//s.goroutines <- true
 
 	value := fmt.Sprintf("%fs", tsk.I)
 	interval, err := time.ParseDuration(value)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	ticker := time.NewTicker(interval)
 
 	func() {
@@ -76,7 +91,7 @@ func (s *Service) StartTask(tsk *task.Task) {
 		iter := 1
 
 		tsk.Status = "in process"
-		tsk.StartTime = time.Now()
+		tsk.StartTime = time.Now().Format(time.DateTime)
 		tsk.Iteration = uint(iter)
 
 		for t := range ticker.C {
@@ -90,7 +105,7 @@ func (s *Service) StartTask(tsk *task.Task) {
 				continue
 			}
 
-			tsk.EndTime = time.Now()
+			tsk.EndTime = time.Now().Format(time.DateTime)
 			tsk.Status = "completed"
 
 			return
@@ -99,7 +114,7 @@ func (s *Service) StartTask(tsk *task.Task) {
 
 	ticker.Stop()
 
-	s.cache.TaskCleaner(tsk)
+	go s.cache.TaskCleaner(tsk)
 
 	<-s.goroutines
 }

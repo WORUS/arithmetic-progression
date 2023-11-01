@@ -24,5 +24,7 @@ func (h *Handler) SetTask(c *gin.Context) {
 		return
 	}
 	h.services.SetTaskInQueue(ctx, tsk)
-	c.JSON(http.StatusOK, tsk)
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "task successfully queued",
+	})
 }

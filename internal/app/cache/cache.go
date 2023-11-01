@@ -63,5 +63,7 @@ func (c *Cache) TaskCleaner(tsk *task.Task) {
 
 	<-tickerTTL.C
 
-	delete(c.tasks, tsk.Key)
+	//delete(c.tasks, tsk.Key)
+
+	tsk.CleanTime = time.Now().Format(time.DateTime)
 }
